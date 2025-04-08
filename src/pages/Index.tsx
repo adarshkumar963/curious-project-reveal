@@ -1,14 +1,26 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
-const Index = () => {
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+
+export default function Index() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-3xl text-center">
+        <h1 className="text-4xl font-bold tracking-tight text-blue-700 sm:text-6xl mb-6">
+          Labour Connect
+        </h1>
+        <p className="text-xl text-blue-600 mb-8">
+          Connect job seekers with employers - find the perfect match for your needs
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700">
+            <Link to="/login">Sign In</Link>
+          </Button>
+          <Button asChild size="lg" variant="outline" className="border-blue-600 text-blue-700 hover:bg-blue-100">
+            <Link to="/register">Create Account</Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
-};
-
-export default Index;
+}
