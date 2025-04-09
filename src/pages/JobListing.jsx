@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from "@/components/ui/pagination";
+import { toast } from "sonner";
 import {
   Briefcase,
   MapPin,
@@ -22,13 +23,19 @@ import {
   CalendarDays,
   ArrowUp,
   ArrowDown,
-  FileText
+  FileText,
+  Loader2
 } from "lucide-react";
 import "./JobListing.css";
 
 export default function JobListing() {
   const [sortOrder, setSortOrder] = useState("newest");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [locationQuery, setLocationQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [hasSearched, setHasSearched] = useState(false);
 
   // Dummy data for job listings
   const jobListings = [
@@ -106,10 +113,47 @@ export default function JobListing() {
     }
   ];
 
+  // Search functionality
+  const handleSearch = () => {
+    setIsSearching(true);
+    
+    // Simulate API search delay
+    setTimeout(() => {
+      const results = jobListings.filter(job => {
+        const titleMatch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          job.description.toLowerCase().includes(searchQuery.toLowerCase());
+        
+        const locationMatch = !locationQuery || 
+                             job.location.toLowerCase().includes(locationQuery.toLowerCase());
+        
+        return titleMatch && locationMatch;
+      });
+      
+      setSearchResults(results);
+      setHasSearched(true);
+      setIsSearching(false);
+      
+      if (results.length === 0) {
+        toast.info("No jobs found matching your search criteria.");
+      } else {
+        toast.success(`Found ${results.length} jobs matching your search criteria.`);
+      }
+    }, 800);
+  };
+
   // Filter jobs by category
-  const filteredJobs = filterCategory === "all" 
-    ? jobListings 
-    : jobListings.filter(job => job.category === filterCategory);
+  const getFilteredJobs = () => {
+    // If we've searched, use search results
+    const jobsToFilter = hasSearched ? searchResults : jobListings;
+    
+    return filterCategory === "all" 
+      ? jobsToFilter 
+      : jobsToFilter.filter(job => job.category === filterCategory);
+  };
+
+  // Get filtered jobs
+  const filteredJobs = getFilteredJobs();
 
   // Sort jobs by date
   const sortedJobs = [...filteredJobs].sort((a, b) => {
@@ -130,6 +174,21 @@ export default function JobListing() {
     { icon: Briefcase, name: "Warehousing", value: "Warehousing" }
   ];
 
+  // Reset search
+  const handleResetSearch = () => {
+    setSearchQuery("");
+    setLocationQuery("");
+    setHasSearched(false);
+    setSearchResults([]);
+  };
+
+  // Handle key press for search
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   return (
     <div className="job-listing-page min-h-screen bg-gray-50">
       {/* Header with search */}
@@ -144,6 +203,9 @@ export default function JobListing() {
                 type="text" 
                 placeholder="Job title, keywords, or company" 
                 className="pl-10 bg-white"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
               />
             </div>
             <div className="flex-1 relative">
@@ -152,13 +214,36 @@ export default function JobListing() {
                 type="text" 
                 placeholder="Location" 
                 className="pl-10 bg-white"
+                value={locationQuery}
+                onChange={(e) => setLocationQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
               />
             </div>
-            <Button className="bg-blue-700 hover:bg-blue-800">
-              <Search className="mr-2" />
-              Search Jobs
+            <Button 
+              className="bg-blue-700 hover:bg-blue-800" 
+              onClick={handleSearch}
+              disabled={isSearching}
+            >
+              {isSearching ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="mr-2" />
+              )}
+              {isSearching ? "Searching..." : "Search Jobs"}
             </Button>
           </div>
+          
+          {hasSearched && (
+            <div className="flex justify-center mt-4">
+              <Button 
+                variant="outline" 
+                className="bg-white hover:bg-blue-50 text-blue-700"
+                onClick={handleResetSearch}
+              >
+                Clear Search
+              </Button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -228,10 +313,36 @@ export default function JobListing() {
                 </div>
               </div>
 
+              {/* Search results info */}
+              {hasSearched && (
+                <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-blue-700">
+                    {sortedJobs.length === 0 ? 
+                      'No jobs found for your search.' : 
+                      `Showing ${sortedJobs.length} results for "${searchQuery}${locationQuery ? ` in ${locationQuery}` : ''}"`
+                    }
+                  </p>
+                </div>
+              )}
+
+              {/* No results message */}
+              {sortedJobs.length === 0 && (
+                <div className="text-center py-10">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-4">
+                    <Search className="h-8 w-8" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No jobs found</h3>
+                  <p className="text-gray-600 max-w-md mx-auto mb-6">
+                    We couldn't find any jobs matching your search criteria. Try adjusting your filters or search terms.
+                  </p>
+                  <Button onClick={handleResetSearch}>Clear Filters</Button>
+                </div>
+              )}
+
               {/* Job cards */}
               <div className="space-y-4">
                 {sortedJobs.map((job) => (
-                  <Card key={job.id} className="job-card hover:shadow-md transition-shadow">
+                  <Card key={job.id} className="job-card hover:shadow-md transition-shadow fade-in">
                     <CardContent className="p-6">
                       <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                         <div className="flex-1">
@@ -283,25 +394,27 @@ export default function JobListing() {
               </div>
 
               {/* Pagination */}
-              <Pagination className="mt-8">
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious href="#" />
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink href="#" isActive>1</PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink href="#">2</PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationLink href="#">3</PaginationLink>
-                  </PaginationItem>
-                  <PaginationItem>
-                    <PaginationNext href="#" />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+              {sortedJobs.length > 0 && (
+                <Pagination className="mt-8">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious href="#" />
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink href="#" isActive>1</PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink href="#">2</PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink href="#">3</PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationNext href="#" />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
             </div>
           </div>
         </div>

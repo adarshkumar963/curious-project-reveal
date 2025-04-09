@@ -113,6 +113,33 @@ input[type="checkbox"]:checked {
   text-decoration: underline;
 }
 
+/* Empty state for no results */
+.empty-state {
+  text-align: center;
+  padding: 3rem 0;
+}
+
+/* Search results highlight */
+.search-highlight {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { background-color: rgba(219, 234, 254, 0.1); }
+  50% { background-color: rgba(219, 234, 254, 0.3); }
+  100% { background-color: rgba(219, 234, 254, 0.1); }
+}
+
+/* Loading spinner animation */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .job-search-header {
