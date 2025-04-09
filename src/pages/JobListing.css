@@ -140,6 +140,32 @@ input[type="checkbox"]:checked {
   to { transform: rotate(360deg); }
 }
 
+/* Search input clear button styles */
+.search-input-container {
+  position: relative;
+}
+
+.clear-button {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.clear-button:hover {
+  color: #374151;
+}
+
+/* Interactive filter styles */
+.filter-active {
+  background-color: #e0e7ff;
+  border-color: #4f46e5;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .job-search-header {

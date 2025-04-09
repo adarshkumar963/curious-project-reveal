@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -24,7 +23,8 @@ import {
   ArrowUp,
   ArrowDown,
   FileText,
-  Loader2
+  Loader2,
+  X
 } from "lucide-react";
 import "./JobListing.css";
 
@@ -36,6 +36,12 @@ export default function JobListing() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [selectedJobTypes, setSelectedJobTypes] = useState({
+    'full-time': false,
+    'part-time': false,
+    'temporary': false,
+    'contract': false
+  });
 
   // Dummy data for job listings
   const jobListings = [
@@ -113,7 +119,15 @@ export default function JobListing() {
     }
   ];
 
-  // Search functionality
+  // Handle job type filter changes
+  const handleJobTypeChange = (type) => {
+    setSelectedJobTypes(prev => ({
+      ...prev,
+      [type]: !prev[type]
+    }));
+  };
+
+  // Enhanced search functionality
   const handleSearch = () => {
     setIsSearching(true);
     
@@ -127,7 +141,11 @@ export default function JobListing() {
         const locationMatch = !locationQuery || 
                              job.location.toLowerCase().includes(locationQuery.toLowerCase());
         
-        return titleMatch && locationMatch;
+        // Filter by job type if any are selected
+        const jobTypeMatch = Object.values(selectedJobTypes).every(v => v === false) || 
+                            (job.type && selectedJobTypes[job.type.toLowerCase().replace('-', '')]);
+        
+        return titleMatch && locationMatch && jobTypeMatch;
       });
       
       setSearchResults(results);
@@ -141,6 +159,13 @@ export default function JobListing() {
       }
     }, 800);
   };
+
+  // Real-time search when job types are changed
+  useEffect(() => {
+    if (hasSearched) {
+      handleSearch();
+    }
+  }, [selectedJobTypes]);
 
   // Filter jobs by category
   const getFilteredJobs = () => {
@@ -180,6 +205,21 @@ export default function JobListing() {
     setLocationQuery("");
     setHasSearched(false);
     setSearchResults([]);
+    setSelectedJobTypes({
+      'full-time': false,
+      'part-time': false,
+      'temporary': false,
+      'contract': false
+    });
+  };
+
+  // Clear individual search field
+  const clearSearchField = (field) => {
+    if (field === 'query') {
+      setSearchQuery('');
+    } else if (field === 'location') {
+      setLocationQuery('');
+    }
   };
 
   // Handle key press for search
@@ -202,22 +242,38 @@ export default function JobListing() {
               <Input 
                 type="text" 
                 placeholder="Job title, keywords, or company" 
-                className="pl-10 bg-white"
+                className="pl-10 bg-white pr-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
               />
+              {searchQuery && (
+                <button 
+                  onClick={() => clearSearchField('query')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
             <div className="flex-1 relative">
               <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <Input 
                 type="text" 
                 placeholder="Location" 
-                className="pl-10 bg-white"
+                className="pl-10 bg-white pr-10"
                 value={locationQuery}
                 onChange={(e) => setLocationQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
               />
+              {locationQuery && (
+                <button 
+                  onClick={() => clearSearchField('location')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
             <Button 
               className="bg-blue-700 hover:bg-blue-800" 
@@ -276,19 +332,43 @@ export default function JobListing() {
                 <h3 className="text-lg font-semibold mb-3 text-blue-700">Job Type</h3>
                 <div className="space-y-2">
                   <div className="flex items-center">
-                    <input type="checkbox" id="full-time" className="mr-2" />
+                    <input 
+                      type="checkbox" 
+                      id="full-time" 
+                      className="mr-2"
+                      checked={selectedJobTypes['full-time']}
+                      onChange={() => handleJobTypeChange('full-time')}
+                    />
                     <label htmlFor="full-time">Full-time</label>
                   </div>
                   <div className="flex items-center">
-                    <input type="checkbox" id="part-time" className="mr-2" />
+                    <input 
+                      type="checkbox" 
+                      id="part-time" 
+                      className="mr-2"
+                      checked={selectedJobTypes['part-time']}
+                      onChange={() => handleJobTypeChange('part-time')}
+                    />
                     <label htmlFor="part-time">Part-time</label>
                   </div>
                   <div className="flex items-center">
-                    <input type="checkbox" id="temporary" className="mr-2" />
+                    <input 
+                      type="checkbox" 
+                      id="temporary" 
+                      className="mr-2"
+                      checked={selectedJobTypes['temporary']}
+                      onChange={() => handleJobTypeChange('temporary')}
+                    />
                     <label htmlFor="temporary">Temporary</label>
                   </div>
                   <div className="flex items-center">
-                    <input type="checkbox" id="contract" className="mr-2" />
+                    <input 
+                      type="checkbox" 
+                      id="contract" 
+                      className="mr-2"
+                      checked={selectedJobTypes['contract']}
+                      onChange={() => handleJobTypeChange('contract')}
+                    />
                     <label htmlFor="contract">Contract</label>
                   </div>
                 </div>
@@ -315,7 +395,7 @@ export default function JobListing() {
 
               {/* Search results info */}
               {hasSearched && (
-                <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200 search-highlight">
                   <p className="text-blue-700">
                     {sortedJobs.length === 0 ? 
                       'No jobs found for your search.' : 
@@ -327,7 +407,7 @@ export default function JobListing() {
 
               {/* No results message */}
               {sortedJobs.length === 0 && (
-                <div className="text-center py-10">
+                <div className="text-center py-10 empty-state">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mb-4">
                     <Search className="h-8 w-8" />
                   </div>
