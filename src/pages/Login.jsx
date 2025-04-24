@@ -1,6 +1,5 @@
-
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // ✅ added useNavigate
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,7 +17,8 @@ const loginSchema = z.object({
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  
+  const navigate = useNavigate(); // ✅ navigation hook
+
   const form = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -35,11 +35,13 @@ const Login = () => {
     // This would be replaced with an actual API call in a production app
     console.log("Login attempt:", data);
     
-    // Display success toast for demo purposes
     toast({
       title: "Login Successful",
       description: "You have been logged in successfully.",
     });
+
+    // ✅ redirect to dashboard
+    navigate("/job");
   };
 
   return (
